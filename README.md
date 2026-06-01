@@ -28,7 +28,9 @@ bun run db:setup && bun run redis:flush
 bun run dev
 ```
 
-This starts the API, worker, Twilio mock, and frontend together. Open `http://localhost:5173` for the admin UI.
+This starts the API, worker, Twilio mock, and frontend together. 
+
+- Open [http://localhost:5173](http://localhost:5173) to access the admin UI and manage messages.
 
 Local service URLs:
 
