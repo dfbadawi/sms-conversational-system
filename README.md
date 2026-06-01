@@ -79,4 +79,4 @@ Or use the Bruno collection in [`_bruno/`](./_bruno/):
 3. Run **twilio-mock → Simulate Inbound**.
 4. All endpoints for both **api** and **twilio-mock** are available in the collection.
 
-You can also use the dev simulate panel in the frontend at `http://localhost:5173`.
+You can also use the dev simulate panel in the frontend at [http://localhost:5173](http://localhost:5173).
