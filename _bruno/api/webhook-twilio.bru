@@ -1,0 +1,18 @@
+meta {
+  name: Webhook Twilio
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/webhook/twilio
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  MessageSid: SM{{$uuid}}
+  From: +15559876543
+  To: {{twilioFromNumber}}
+  Body: Hello from Bruno
+}

@@ -1,0 +1,27 @@
+{
+  "name": "sms-conversational-system",
+  "private": true,
+  "packageManager": "bun@1.3.14",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:infra": "docker compose up -d postgres redis",
+    "docker:build:up": "docker compose up --build",
+    "docker:destroy": "docker compose down --volumes --remove-orphans --rmi all",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "verify": "bun run typecheck && bun run test",
+    "db:setup": "bun --env-file=.env --cwd apps/api src/db/setup.ts",
+    "redis:flush": "docker compose exec redis redis-cli FLUSHALL",
+    "reset": "bun run docker:destroy && (turbo daemon stop >/dev/null 2>&1 || true) && rm -rf .turbo/daemon && (turbo daemon clean >/dev/null 2>&1 || true) && find . -name .turbo -type d -prune -exec rm -rf {} + && find . -name node_modules -type d -prune -exec rm -rf {} + && find . -name dist -type d -prune -exec rm -rf {} +"
+  },
+  "devDependencies": {
+    "turbo": "2.9.16",
+    "typescript": "6.0.3"
+  }
+}

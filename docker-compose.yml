@@ -1,0 +1,124 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sms_system}
+      POSTGRES_USER: ${POSTGRES_USER:-sms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sms}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sms} -d ${POSTGRES_DB:-sms_system}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db-setup:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sms}:${POSTGRES_PASSWORD:-sms}@postgres:5432/${POSTGRES_DB:-sms_system}
+    command: ["bun", "src/db/setup.ts"]
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      # Use Docker service hostnames — do not substitute from root .env (localhost URLs are for host dev).
+      DATABASE_URL: postgres://${POSTGRES_USER:-sms}:${POSTGRES_PASSWORD:-sms}@postgres:5432/${POSTGRES_DB:-sms_system}
+      REDIS_URL: redis://redis:6379
+      API_PORT: ${API_PORT:-3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      TWILIO_BASE_URL: http://twilio-mock:3002
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db-setup:
+        condition: service_completed_successfully
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sms}:${POSTGRES_PASSWORD:-sms}@postgres:5432/${POSTGRES_DB:-sms_system}
+      REDIS_URL: redis://redis:6379
+      TWILIO_BASE_URL: http://twilio-mock:3002
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-AC_mock_account}
+      PROCESSING_DELAY_MIN_MS: ${PROCESSING_DELAY_MIN_MS:-3000}
+      PROCESSING_DELAY_MAX_MS: ${PROCESSING_DELAY_MAX_MS:-15000}
+      TEST_PROCESSING_DELAY_MS: ${TEST_PROCESSING_DELAY_MS:-}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db-setup:
+        condition: service_completed_successfully
+      twilio-mock:
+        condition: service_started
+
+  twilio-mock:
+    build:
+      context: .
+      dockerfile: apps/twilio-mock/Dockerfile
+    environment:
+      TWILIO_MOCK_PORT: ${TWILIO_MOCK_PORT:-3002}
+      API_WEBHOOK_URL: http://api:3000/webhook/twilio
+    ports:
+      - "3002:3002"
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    environment:
+      FRONTEND_PORT: ${FRONTEND_PORT:-5173}
+      VITE_API_BASE_URL: http://localhost:3000
+      VITE_TWILIO_MOCK_BASE_URL: http://localhost:3002
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  postgres_data:

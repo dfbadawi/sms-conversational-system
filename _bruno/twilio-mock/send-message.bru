@@ -1,0 +1,21 @@
+meta {
+  name: Send Message
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{mockBaseUrl}}/2010-04-01/Accounts/{{twilioAccountSid}}/Messages
+  body: formUrlEncoded
+  auth: none
+}
+
+headers {
+  Idempotency-Key: bruno-{{$uuid}}
+}
+
+body:form-urlencoded {
+  From: {{twilioFromNumber}}
+  To: +15559876543
+  Body: Hello from Bruno outbound
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Get Conversation
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/conversations/{{conversationId}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  conversationId: 00000000-0000-0000-0000-000000000000
+}

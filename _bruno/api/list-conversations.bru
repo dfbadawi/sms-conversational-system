@@ -1,0 +1,18 @@
+meta {
+  name: List Conversations
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/conversations
+  body: none
+  auth: none
+}
+
+script:post-response {
+  const conversations = res.body;
+  if (Array.isArray(conversations) && conversations.length > 0) {
+    bru.setEnvVar("conversationId", conversations[0].id);
+  }
+}

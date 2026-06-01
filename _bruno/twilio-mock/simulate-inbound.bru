@@ -1,0 +1,23 @@
+meta {
+  name: Simulate Inbound
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{mockBaseUrl}}/simulate/inbound
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body:json {
+  {
+    "from": "+15559876543",
+    "body": "Hello from Bruno simulate",
+    "to": "{{twilioFromNumber}}"
+  }
+}
