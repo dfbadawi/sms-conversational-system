@@ -41,7 +41,6 @@ function waitForOutboxRelease(timeoutMs: number): Promise<void> {
 }
 
 async function publishEventToQueue(event: outboxRepo.OutboxEvent): Promise<void> {
-  // Only message.received events are inserted today.
   const messageId = event.payload.messageId;
   const jobData: ProcessInboundMessageJob = { messageId };
   const jobId = inboundJobId(messageId);
