@@ -120,18 +120,6 @@ Read the pipeline in this order:
 
 ## Production Scale
 
-For production, I would add Twilio signature validation, rate limiting, managed Postgres/Redis or a managed broker, structured logs, metrics, tracing, dead-letter/replay tooling, secrets management, and horizontal worker autoscaling from queue depth. The service boundaries would stay the same.
+For production, I would add Twilio signature validation, rate limiting, managed Postgres/Redis or a managed broker, structured logs, metrics, tracing, dead-letter/replay tooling, secrets management, horizontal worker autoscaling from queue depth, and stronger error handling and response validation. The service boundaries would stay the same.
 
 At high production scale, I would remove the in-process outbox publisher loop from the API and use change data capture (CDC) on the outbox table to publish new events to the queue from the Postgres transaction log. That keeps ingestion focused on webhook handling, scales publish independently of API replicas, and avoids relying on per-instance fallback polling.
-
-**What this assessment codebase deliberately skips** (acceptable here, required in production):
-
-- Twilio webhook signature verification and auth token checks
-- Exhaustive response validation on outbound Twilio HTTP calls — the mock returns a known shape
-- Runtime guards for outbox event types beyond the one we insert
-- Per-route try/catch when a global error handler suffices
-- Separate error classes for every non-retryable worker failure — only conversation ordering needs a distinct retry signal
-- Validating unused URL params (e.g. Twilio account SID in the mock send path)
-- Outbox `markEventFailed` retry accounting beyond logging (could be log-only until replay tooling exists)
-
-The service boundaries, outbox, queue, ordering, and idempotency model would stay the same.
